@@ -2,9 +2,17 @@ FROM jenkins/jenkins:lts
 
 USER root
 
-# Docker Compose (ARM64 uyumlu – senin makineye göre)
+# Docker CLI kur
+RUN apt-get update && \
+    apt-get install -y docker.io curl && \
+    rm -rf /var/lib/apt/lists/*
+
+# Docker Compose v2 (ARM64)
 RUN curl -L https://github.com/docker/compose/releases/download/v2.29.7/docker-compose-linux-aarch64 \
-    -o /usr/local/bin/docker-compose \
- && chmod +x /usr/local/bin/docker-compose
+    -o /usr/local/bin/docker-compose && \
+    chmod +x /usr/local/bin/docker-compose
+
+# Jenkins kullanıcısını docker grubuna ekle
+RUN groupadd -f docker && usermod -aG docker jenkins
 
 USER jenkins
