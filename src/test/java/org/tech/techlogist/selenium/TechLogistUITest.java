@@ -21,8 +21,9 @@ public class TechLogistUITest {
 
     @BeforeEach
     void setUp() {
-        WebDriverManager.chromedriver().setup();
+        WebDriverManager.chromedriver().browserInDocker().setup();
         ChromeOptions options = new ChromeOptions();
+        options.setBinary("/usr/bin/chromium");
         options.addArguments("--headless=new");
         options.addArguments("--no-sandbox");
         options.addArguments("--disable-dev-shm-usage");
@@ -33,6 +34,7 @@ public class TechLogistUITest {
         options.setPageLoadStrategy(PageLoadStrategy.NORMAL);
         driver = new ChromeDriver(options);
         driver.manage().timeouts().pageLoadTimeout(Duration.ofSeconds(30));
+        driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(10));
         wait = new WebDriverWait(driver, Duration.ofSeconds(15));
     }
 
