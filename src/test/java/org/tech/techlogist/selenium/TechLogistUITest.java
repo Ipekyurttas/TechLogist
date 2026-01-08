@@ -17,7 +17,7 @@ public class TechLogistUITest {
 
     private WebDriver driver;
     private WebDriverWait wait;
-    private final String BASE_URL = "http://localhost:8085";
+    private final String BASE_URL = "http://host.docker.internal:8085";
 
     @BeforeEach
     void setUp() {
