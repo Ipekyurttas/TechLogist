@@ -1,11 +1,11 @@
+version: "3.9"
 services:
   jenkins:
     image: jenkins/jenkins:lts
-    container_name: jenkins
+    container_name: jenkins-blueocean
     user: root
     ports:
       - "8080:8080"
-      - "50000:50000"
     volumes:
       - jenkins_home:/var/jenkins_home
       - /var/run/docker.sock:/var/run/docker.sock
@@ -15,24 +15,18 @@ services:
   app:
     build: .
     container_name: techlogist_app
-    environment:
-      - SPRING_DATASOURCE_URL=jdbc:h2:mem:techlogist;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
-      - SPRING_DATASOURCE_USERNAME=sa
-      - SPRING_DATASOURCE_PASSWORD=
-      - SPRING_JPA_DATABASE_PLATFORM=org.hibernate.dialect.H2Dialect
-      - SPRING_JPA_HIBERNATE_DDL_AUTO=create-drop
-    ports:
-      - "8085:8080"
-    healthcheck:
-      test: ["CMD", "wget", "-q", "-O", "-", "http://localhost:8080/"]
-      interval: 5s
-      timeout: 3s
-      retries: 25
+    networks:
+      - testnet
+
+  selenium-chrome:
+    image: selenium/standalone-chrome:latest
+    shm_size: 2gb
     networks:
       - testnet
 
 networks:
   testnet:
+    name: techlogist_testnet
 
 volumes:
   jenkins_home:

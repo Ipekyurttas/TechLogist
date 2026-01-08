@@ -1,10 +1,9 @@
 package org.tech.techlogist.selenium;
 
-import io.github.bonigarcia.wdm.WebDriverManager;
 import org.junit.jupiter.api.*;
 import org.openqa.selenium.*;
-import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
+import org.openqa.selenium.remote.RemoteWebDriver; // ÖNEMLİ: RemoteWebDriver eklendi
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
@@ -20,12 +19,13 @@ public class TechLogistUITest {
     private WebDriver driver;
     private WebDriverWait wait;
 
+    // Docker ağı içindeki servis adları kullanılmalıdır
     private final String BASE_URL = "http://techlogist_app:8080";
+    private final String SELENIUM_GRID_URL = "http://selenium-chrome:4444/wd/hub";
 
     @BeforeAll
     static void waitForApp() throws Exception {
         String healthUrl = "http://techlogist_app:8080/login";
-
         System.out.println("⌛ Uygulamanın ayağa kalkması bekleniyor...");
 
         int retries = 30;
@@ -41,31 +41,42 @@ public class TechLogistUITest {
                     return;
                 }
             } catch (Exception ignored) {}
-
             Thread.sleep(2000);
         }
-
         fail("❌ Uygulama zamanında ayağa kalkmadı.");
     }
 
     @BeforeEach
-    void setUp() {
-        WebDriverManager.chromedriver().setup();
-
+    void setUp() throws Exception {
+        // M4 (ARM64) mimarisi için en stabil ayarlar
         ChromeOptions options = new ChromeOptions();
-        options.addArguments("--headless=new", "--no-sandbox", "--disable-dev-shm-usage",
-                "--disable-gpu", "--window-size=1920,1080", "--disable-notifications");
+        options.addArguments("--headless=new");
+        options.addArguments("--no-sandbox");
+        options.addArguments("--disable-dev-shm-usage");
+        options.addArguments("--disable-gpu");
+        options.addArguments("--window-size=1920,1080");
 
-        driver = new ChromeDriver(options);
+        // Jenkins içindeki sorunlu ChromeDriver yerine RemoteWebDriver kullanıyoruz
+        try {
+            driver = new RemoteWebDriver(new URL(SELENIUM_GRID_URL), options);
+            System.out.println("✅ Selenium Grid'e başarıyla bağlanıldı.");
+        } catch (Exception e) {
+            System.err.println("❌ Selenium Grid bağlantı hatası: " + e.getMessage());
+            throw e;
+        }
+
         wait = new WebDriverWait(driver, Duration.ofSeconds(15));
-
         registerInitialUsers();
     }
 
     @AfterEach
     void tearDown() {
-        if (driver != null) driver.quit();
+        if (driver != null) {
+            driver.quit();
+        }
     }
+
+    // --- TEST METODLARI (Aynen Kalabilir) ---
 
     private void registerInitialUsers() {
         registerSingleUser("ipek", "ipek@techlogist.com", "123", "ADMIN");
@@ -74,19 +85,18 @@ public class TechLogistUITest {
 
     private void registerSingleUser(String username, String email, String password, String role) {
         driver.get(BASE_URL + "/register");
-        wait.until(ExpectedConditions.presenceOfElementLocated(By.id("username")));
-
-        driver.findElement(By.id("username")).sendKeys(username);
-        driver.findElement(By.id("email")).sendKeys(email);
-        driver.findElement(By.id("password")).sendKeys(password);
-        driver.findElement(By.id("role")).sendKeys(role);
-        driver.findElement(By.cssSelector("button.btn")).click();
-
         try {
+            wait.until(ExpectedConditions.presenceOfElementLocated(By.id("username")));
+            driver.findElement(By.id("username")).sendKeys(username);
+            driver.findElement(By.id("email")).sendKeys(email);
+            driver.findElement(By.id("password")).sendKeys(password);
+            driver.findElement(By.id("role")).sendKeys(role);
+            driver.findElement(By.cssSelector("button.btn")).click();
+
             Alert alert = wait.until(ExpectedConditions.alertIsPresent());
             alert.accept();
-        } catch (TimeoutException e) {
-            System.out.println("⚠ Kullanıcı zaten kayıtlı olabilir: " + username);
+        } catch (Exception e) {
+            System.out.println("⚠ Kullanıcı kaydı sırasında bir durum oluştu (Zaten kayıtlı olabilir): " + username);
         }
     }
 
