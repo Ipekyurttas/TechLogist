@@ -59,19 +59,23 @@ public class TechLogistUITest {
 
     private void registerSingleUser(String username, String email, String password, String role) {
         driver.get(BASE_URL + "/register");
-        try {
-            wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("username")));
-            driver.findElement(By.id("username")).sendKeys(username);
-            driver.findElement(By.id("email")).sendKeys(email);
-            driver.findElement(By.id("password")).sendKeys(password);
+        wait.until(ExpectedConditions.presenceOfElementLocated(By.id("username")));
 
-            WebElement roleDropdown = driver.findElement(By.id("role"));
-            roleDropdown.sendKeys(role);
-            driver.findElement(By.cssSelector("button.btn")).click();
-            wait.until(ExpectedConditions.alertIsPresent());
-            driver.switchTo().alert().accept();
-        } catch (Exception e) {
-            System.out.println("Kullanıcı kaydı atlandı (Zaten var olabilir): " + username);
+        driver.findElement(By.id("username")).sendKeys(username);
+        driver.findElement(By.id("email")).sendKeys(email);
+        driver.findElement(By.id("password")).sendKeys(password);
+
+        WebElement roleDropdown = driver.findElement(By.id("role"));
+        roleDropdown.sendKeys(role);
+
+        driver.findElement(By.cssSelector("button.btn")).click();
+
+        try {
+            Alert alert = wait.until(ExpectedConditions.alertIsPresent());
+            System.out.println("Kayıt Alert Mesajı: " + alert.getText());
+            alert.accept();
+        } catch (TimeoutException e) {
+            fail(username + " kullanıcısı kaydedilirken alert çıkmadı. Sayfa yönlendirmesini kontrol edin.");
         }
     }
 
