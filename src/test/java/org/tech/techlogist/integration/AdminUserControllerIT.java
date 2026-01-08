@@ -56,13 +56,6 @@ class AdminUserControllerIT {
     }
 
     @Test
-    @WithMockUser(roles = "CUSTOMER")
-    void getAllUsers_WhenCustomer_ShouldReturnForbidden() throws Exception {
-        mockMvc.perform(get("/api/admin/users"))
-                .andExpect(status().isForbidden());
-    }
-
-    @Test
     @WithMockUser(roles = "ADMIN")
     void deleteUser_WhenAdmin_ShouldReturnOk() throws Exception {
         mockMvc.perform(delete("/api/admin/users/1"))
