@@ -7,16 +7,16 @@ pipeline {
     }
 
     stages {
-        stage('Sistemi Hazırla (Docker Build)') {
-            steps {
-                echo 'Docker imajları oluşturuluyor ve sistem ayağa kaldırılıyor...'
-                sh 'docker-compose down'
-                sh 'docker-compose up -d --build'
-
-                echo 'Uygulamanın hazır olması bekleniyor...'
-                sleep 15
-            }
-        }
+        stage('Sistemi Hazırla') {
+                    steps {
+                        echo 'Sistem kontrol ediliyor...'
+                        sh 'docker version'
+                        sh 'docker compose down || true'
+                        sh 'docker compose up -d --build'
+                        echo 'Uygulamanın hazır olması bekleniyor...'
+                        sleep 20
+                    }
+                }
 
         stage('Unit Tests') {
             steps {
