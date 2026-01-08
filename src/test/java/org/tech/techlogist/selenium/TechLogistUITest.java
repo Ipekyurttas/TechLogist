@@ -40,7 +40,6 @@ public class TechLogistUITest {
             if (attempts == 0) fail("❌ HATA: Uygulama belirlenen sürede ayağa kalkmadı!");
         }
 
-        // 2. Kullanıcıları bir kez kaydet (Sadece sürecin başında)
         registerStaticUsers();
     }
 
@@ -51,9 +50,10 @@ public class TechLogistUITest {
         WebDriverWait tempWait = new WebDriverWait(tempDriver, Duration.ofSeconds(10));
 
         try {
+            // İsimler Esra ve Esma olarak güncellendi
             String[][] users = {
-                    {"ipek", "ipek@techlogist.com", "123", "ADMIN"},
-                    {"mert", "mert@techlogist.com", "123", "CUSTOMER"}
+                    {"esra", "esra@techlogist.com", "123", "ADMIN"},
+                    {"esma", "esma@techlogist.com", "123", "CUSTOMER"}
             };
             for (String[] u : users) {
                 tempDriver.get(BASE_URL + "/register");
@@ -78,13 +78,12 @@ public class TechLogistUITest {
     @BeforeEach
     void setUp() {
         ChromeOptions options = new ChromeOptions();
-        // Jenkins/Linux ortamı için kritik stabilite ayarları
         options.addArguments("--no-sandbox");
         options.addArguments("--disable-dev-shm-usage");
         options.addArguments("--disable-gpu");
         options.addArguments("--window-size=1920,1080");
         options.addArguments("--headless=new");
-        options.addArguments("--remote-allow-origins=*"); // CDP versiyon hatasını çözer
+        options.addArguments("--remote-allow-origins=*");
 
         driver = new ChromeDriver(options);
         wait = new WebDriverWait(driver, Duration.ofSeconds(15));
@@ -127,19 +126,16 @@ public class TechLogistUITest {
     @Test @Order(3)
     @DisplayName("Müşteri Satın Alma Akışı")
     void testCustomerPurchaseFlow() {
-        loginUser("mert", "123");
+        loginUser("esma", "123"); // mert yerine esma
         waitForElement(By.id("nav-products"));
         driver.findElement(By.id("nav-products")).click();
 
-        // Ürünü sepete ekle
         jsClick(wait.until(ExpectedConditions.elementToBeClickable(By.cssSelector(".admin-btn"))));
         handleSimpleAlert();
 
-        // Sepete git ve öde
         driver.get(BASE_URL + "/cart");
         jsClick(wait.until(ExpectedConditions.elementToBeClickable(By.cssSelector("button[onclick='checkout()']"))));
 
-        // Kredi kartı seçeneği
         wait.until(ExpectedConditions.elementToBeClickable(By.xpath("//span[text()='Kredi Kartı']"))).click();
         alertTextControl("Ödeme başarılı");
     }
@@ -147,7 +143,7 @@ public class TechLogistUITest {
     @Test @Order(4)
     @DisplayName("Bildirim Okundu İşaretleme")
     void testUserNotificationAndMarkAsRead() {
-        loginUser("mert", "123");
+        loginUser("esma", "123"); // mert yerine esma
         driver.findElement(By.id("nav-profile")).click();
         try {
             jsClick(wait.until(ExpectedConditions.elementToBeClickable(
@@ -162,7 +158,7 @@ public class TechLogistUITest {
     @Test @Order(5)
     @DisplayName("Müşteri Sipariş İptali")
     void testCustomerOrderCancellation() {
-        loginUser("mert", "123");
+        loginUser("esma", "123"); // mert yerine esma
         driver.findElement(By.id("nav-orders")).click();
         try {
             WebElement cancelBtn = wait.until(ExpectedConditions.elementToBeClickable(By.xpath("//button[contains(text(),'İptal Et')]")));
@@ -212,10 +208,10 @@ public class TechLogistUITest {
         alertTextControl("Bildirim gönderildi");
     }
 
-    // --- YARDIMCI METODLAR (Helper Methods) ---
+    // --- YARDIMCI METODLAR ---
 
     private void loginAsAdmin() {
-        loginUser("ipek", "123");
+        loginUser("esra", "123"); // ipek yerine esra
         wait.until(ExpectedConditions.urlContains("/admin"));
     }
 
@@ -227,7 +223,6 @@ public class TechLogistUITest {
         driver.findElement(By.cssSelector("button.btn")).click();
 
         try {
-            // Jenkins'te login başarısız olursa alert çıkabilir, onu yakala
             Alert alert = driver.switchTo().alert();
             String text = alert.getText();
             alert.accept();

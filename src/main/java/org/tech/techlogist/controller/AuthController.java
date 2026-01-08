@@ -39,7 +39,7 @@ public class AuthController {
 
 
         String role = "CUSTOMER";
-        if ("ipek".equals(dto.getUsername())) {
+        if ("esra".equals(dto.getUsername())) {
             role = "ADMIN";
         }
 
