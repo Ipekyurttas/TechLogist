@@ -9,6 +9,9 @@ import org.openqa.selenium.support.ui.WebDriverWait;
 
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.Statement;
 import java.time.Duration;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -40,7 +43,34 @@ public class TechLogistUITest {
             if (attempts == 0) fail("❌ HATA: Uygulama belirlenen sürede ayağa kalkmadı!");
         }
 
+        // 2. Önce Veritabanını Sıfırla
+        clearDatabase();
+
+        // 3. Sonra Kullanıcıları Kaydet
         registerStaticUsers();
+    }
+
+    /**
+     * H2 Veritabanını SQL ile sıfırlar.
+     */
+    private static void clearDatabase() {
+        // Docker environment ayarlarınla uyumlu
+        String jdbcUrl = "jdbc:h2:tcp://localhost:8085/mem:techlogist";
+        // Not: Eğer TCP üzerinden erişim kapalıysa direkt bellek içi erişim denenir:
+        String localUrl = "jdbc:h2:mem:techlogist";
+
+        System.out.println("🧹 Veritabanı temizleniyor...");
+
+        try (Connection conn = DriverManager.getConnection(localUrl, "sa", "");
+             Statement stmt = conn.createStatement()) {
+
+            // Tüm tabloları ve verileri siler (Hibernate tabloları otomatik tekrar oluşturur)
+            stmt.execute("DROP ALL OBJECTS");
+            System.out.println("✅ Veritabanı başarıyla sıfırlandı!");
+
+        } catch (Exception e) {
+            System.err.println("⚠️ Veritabanı temizlenirken hata oluştu (Tablolar zaten boş olabilir): " + e.getMessage());
+        }
     }
 
     private static void registerStaticUsers() {
@@ -50,7 +80,6 @@ public class TechLogistUITest {
         WebDriverWait tempWait = new WebDriverWait(tempDriver, Duration.ofSeconds(10));
 
         try {
-            // İsimler Esra ve Esma olarak güncellendi
             String[][] users = {
                     {"esra", "esra@techlogist.com", "123", "ADMIN"},
                     {"esma", "esma@techlogist.com", "123", "CUSTOMER"}
@@ -67,7 +96,7 @@ public class TechLogistUITest {
                     tempWait.until(ExpectedConditions.alertIsPresent()).accept();
                     System.out.println("✅ Kullanıcı hazırlandı: " + u[0]);
                 } catch (Exception e) {
-                    System.out.println("ℹ Kullanıcı zaten mevcut veya kayıt atlandı: " + u[0]);
+                    System.out.println("ℹ Kayıt sırasında bir durum oluştu: " + u[0] + " - " + e.getMessage());
                 }
             }
         } finally {
@@ -78,12 +107,8 @@ public class TechLogistUITest {
     @BeforeEach
     void setUp() {
         ChromeOptions options = new ChromeOptions();
-        options.addArguments("--no-sandbox");
-        options.addArguments("--disable-dev-shm-usage");
-        options.addArguments("--disable-gpu");
-        options.addArguments("--window-size=1920,1080");
-        options.addArguments("--headless=new");
-        options.addArguments("--remote-allow-origins=*");
+        options.addArguments("--no-sandbox", "--disable-dev-shm-usage", "--disable-gpu",
+                "--window-size=1920,1080", "--headless=new", "--remote-allow-origins=*");
 
         driver = new ChromeDriver(options);
         wait = new WebDriverWait(driver, Duration.ofSeconds(15));
@@ -91,9 +116,7 @@ public class TechLogistUITest {
 
     @AfterEach
     void tearDown() {
-        if (driver != null) {
-            driver.quit();
-        }
+        if (driver != null) driver.quit();
     }
 
     // --- TEST SENARYOLARI ---
@@ -126,7 +149,7 @@ public class TechLogistUITest {
     @Test @Order(3)
     @DisplayName("Müşteri Satın Alma Akışı")
     void testCustomerPurchaseFlow() {
-        loginUser("esma", "123"); // mert yerine esma
+        loginUser("esma", "123");
         waitForElement(By.id("nav-products"));
         driver.findElement(By.id("nav-products")).click();
 
@@ -143,7 +166,7 @@ public class TechLogistUITest {
     @Test @Order(4)
     @DisplayName("Bildirim Okundu İşaretleme")
     void testUserNotificationAndMarkAsRead() {
-        loginUser("esma", "123"); // mert yerine esma
+        loginUser("esma", "123");
         driver.findElement(By.id("nav-profile")).click();
         try {
             jsClick(wait.until(ExpectedConditions.elementToBeClickable(
@@ -158,7 +181,7 @@ public class TechLogistUITest {
     @Test @Order(5)
     @DisplayName("Müşteri Sipariş İptali")
     void testCustomerOrderCancellation() {
-        loginUser("esma", "123"); // mert yerine esma
+        loginUser("esma", "123");
         driver.findElement(By.id("nav-orders")).click();
         try {
             WebElement cancelBtn = wait.until(ExpectedConditions.elementToBeClickable(By.xpath("//button[contains(text(),'İptal Et')]")));
@@ -211,7 +234,7 @@ public class TechLogistUITest {
     // --- YARDIMCI METODLAR ---
 
     private void loginAsAdmin() {
-        loginUser("esra", "123"); // ipek yerine esra
+        loginUser("esra", "123");
         wait.until(ExpectedConditions.urlContains("/admin"));
     }
 
