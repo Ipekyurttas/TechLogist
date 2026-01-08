@@ -23,14 +23,16 @@ public class TechLogistUITest {
     void setUp() {
         WebDriverManager.chromedriver().setup();
         ChromeOptions options = new ChromeOptions();
+        options.addArguments("--headless=new");
+        options.addArguments("--no-sandbox");
+        options.addArguments("--disable-dev-shm-usage");
+        options.addArguments("--disable-gpu");
+        options.addArguments("--window-size=1920,1080");
         options.addArguments("--remote-allow-origins=*");
         options.addArguments("--disable-notifications");
         options.setPageLoadStrategy(PageLoadStrategy.NORMAL);
-
         driver = new ChromeDriver(options);
-
         driver.manage().timeouts().pageLoadTimeout(Duration.ofSeconds(30));
-        driver.manage().window().maximize();
         wait = new WebDriverWait(driver, Duration.ofSeconds(15));
     }
 
