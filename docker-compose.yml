@@ -35,8 +35,6 @@ services:
     image: selenium/standalone-chrome:latest
     container_name: selenium-chrome
     shm_size: 2gb
-    environment:
-      - SE_OPTS=--session-timeout 120
     networks:
       - testnet
     depends_on:
