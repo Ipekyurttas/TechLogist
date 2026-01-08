@@ -8,9 +8,9 @@ pipeline {
                 sh '''
                     set -x
                     docker version
-                    docker compose down || true
-                    docker compose up -d --build
-                    docker compose ps
+                    docker-compose down || true
+                    docker-compose up -d --build
+                    docker-compose ps
                     sleep 20
                 '''
             }
@@ -52,9 +52,9 @@ pipeline {
             echo 'Post aşaması: container temizliği'
             script {
                 if (fileExists('docker-compose.yml')) {
-                    sh 'docker compose down'
+                    sh 'docker-compose down || true'
                 } else {
-                    echo 'Workspace yok, docker compose down atlandı'
+                    echo 'Workspace yok, docker-compose down atlandı'
                 }
             }
         }
@@ -63,7 +63,7 @@ pipeline {
             echo 'Hata sonrası container logları'
             script {
                 if (fileExists('docker-compose.yml')) {
-                    sh 'docker compose logs --tail=100'
+                    sh 'docker-compose logs'
                 } else {
                     echo 'Workspace yok, log alınamadı'
                 }
