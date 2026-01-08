@@ -19,8 +19,9 @@ public class TechLogistUITest {
     private WebDriver driver;
     private WebDriverWait wait;
 
+    private final String GRID_URL = "http://selenium-chrome:4444";
     private final String BASE_URL = "http://techlogist_app:8080";
-    private final String GRID_URL = "http://selenium-chrome:4444/wd/hub";
+
 
     @BeforeAll
     static void waitForApp() throws Exception {
