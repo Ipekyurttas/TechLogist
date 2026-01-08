@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TechLogist - Admin Paneli</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <link rel="stylesheet" href="/css/styles.css">
+    <style>
+        .admin-wrapper { display: flex; min-height: 100vh; background: #f4f7f6; }
+        .sidebar { width: 250px; background: #2c3e50; color: white; padding: 20px; position: fixed; height: 100vh; }
+        .sidebar h2 { margin-bottom: 30px; font-size: 1.5rem; text-align: center; }
+        .sidebar-link { display: block; padding: 15px; color: #ecf0f1; text-decoration: none; border-radius: 5px; margin-bottom: 10px; cursor: pointer; transition: 0.3s; }
+        .sidebar-link:hover, .sidebar-link.active { background: #34495e; color: #3498db; }
+
+        .main-content { flex: 1; margin-left: 250px; padding: 40px; }
+        .admin-card { background: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); display: none; max-width: 800px; margin: 0 auto; }
+        .admin-card.active { display: block; animation: fadeIn 0.5s; }
+
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 5px; font-weight: bold; color: #333; }
+        .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; font-size: 14px; }
+
+        .form-row { display: flex; gap: 15px; margin-bottom: 15px; }
+        .form-row .form-group { flex: 1; margin-bottom: 0; }
+
+        .admin-btn { background: #2c3e50; color: white; padding: 12px 25px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; transition: 0.3s; }
+        .admin-btn:hover { background: #3498db; }
+        .btn-orange { background: #e67e22; }
+    </style>
+</head>
+<body>
+
+<div class="admin-wrapper">
+    <div class="sidebar">
+        <h2><i class="fas fa-user-shield"></i> Yönetim</h2>
+        <div class="sidebar-link active" onclick="showTab('product-tab')"><i class="fas fa-plus-circle"></i> Ürün & Stok Ekle</div>
+        <div class="sidebar-link" onclick="showTab('category-tab')"><i class="fas fa-tags"></i> Kategori Ekle</div>
+        <div class="sidebar-link" onclick="showTab('stock-update-tab')"><i class="fas fa-sync"></i> Stok Güncelle</div>
+        <div class="sidebar-link" onclick="showTab('notify-tab')"><i class="fas fa-bullhorn"></i> Bildirim Gönder</div>
+        <div class="sidebar-link" style="margin-top: 50px; color: #e74c3c;" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Çıkış</div>
+    </div>
+
+    <div class="main-content">
+        <div id="product-tab" class="admin-card active">
+            <h3><i class="fas fa-box"></i> Yeni Ürün ve Stok Tanımla</h3>
+            <p style="font-size: 0.9rem; color: #666; margin-bottom: 20px;">Ürün oluştururken başlangıç stok miktarlarını belirleyin.</p>
+            <form id="productForm">
+                <div class="form-group">
+                    <label>Ürün Adı</label>
+                    <input type="text" id="pName" placeholder="Örn: iPhone 15 Pro" required>
+                </div>
+                <div class="form-group">
+                    <label>Açıklama</label>
+                    <textarea id="pDesc" rows="2" placeholder="Ürün detayları..."></textarea>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Fiyat (₺)</label>
+                        <input type="number" id="pPrice" step="0.01" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Kategori ID</label>
+                        <input type="number" id="pCatId" required>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Başlangıç Stok Miktarı</label>
+                        <input type="number" id="pStockQty" value="0" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Minimum Stok Sınırı</label>
+                        <input type="number" id="pMinStock" value="5" required>
+                    </div>
+                </div>
+                <button type="submit" class="admin-btn">Ürünü ve Stoğu Kaydet</button>
+            </form>
+        </div>
+
+        <div id="category-tab" class="admin-card">
+            <h3><i class="fas fa-tags"></i> Kategori Oluştur</h3>
+            <form id="categoryForm">
+                <div class="form-group">
+                    <label>Kategori Adı</label>
+                    <input type="text" id="cName" placeholder="Örn: Akıllı Telefonlar" required>
+                </div>
+                <button type="submit" class="admin-btn">Kategoriyi Kaydet</button>
+            </form>
+        </div>
+
+        <div id="stock-update-tab" class="admin-card">
+            <h3><i class="fas fa-warehouse"></i> Mevcut Stok Yönetimi</h3>
+            <div class="form-group">
+                <label>Ürün ID ile Sorgula</label>
+                <div style="display: flex; gap: 10px;">
+                    <input type="number" id="sProdId" placeholder="ID giriniz...">
+                    <button type="button" class="admin-btn" onclick="checkStock()">Sorgula</button>
+                </div>
+            </div>
+            <div id="stockResult" style="margin-top: 20px; padding: 20px; background: #f9f9f9; border: 1px dashed #ccc; border-radius: 5px; display: none;">
+                <p>Mevcut Adet: <strong id="currentStock" style="color: #2c3e50; font-size: 1.2rem;">0</strong></p>
+                <div style="margin-top: 15px; display: flex; align-items: center; gap: 10px;">
+                    <input type="number" id="updateQty" placeholder="Miktar" style="width: 120px;">
+                    <button class="admin-btn" onclick="updateStock('increase')">Stok Ekle</button>
+                    <button class="admin-btn btn-orange" onclick="updateStock('decrease')">Stok Çıkar</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="notify-tab" class="admin-card">
+            <h3><i class="fas fa-bell"></i> Bildirim Gönderimi</h3>
+            <p style="font-size: 0.85rem; color: #666; margin-bottom: 15px;">Kullanıcı ID boş bırakılırsa bildirim herkese gider.</p>
+            <form id="notifyForm">
+                <div class="form-group">
+                    <label>Hedef Kullanıcı ID (Opsiyonel)</label>
+                    <input type="number" id="nUserId" placeholder="Tüm kullanıcılar için boş bırakın">
+                </div>
+                <div class="form-group">
+                    <label>Bildirim Başlığı</label>
+                    <input type="text" id="nTitle" required>
+                </div>
+                <div class="form-group">
+                    <label>Mesaj İçeriği</label>
+                    <textarea id="nMessage" rows="4" required></textarea>
+                </div>
+                <button type="submit" class="admin-btn">Bildirimi Yayınla</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    function showTab(tabId) {
+        document.querySelectorAll('.admin-card').forEach(card => card.classList.remove('active'));
+        document.querySelectorAll('.sidebar-link').forEach(link => link.classList.remove('active'));
+        document.getElementById(tabId).classList.add('active');
+        event.currentTarget.classList.add('active');
+    }
+
+    const token = localStorage.getItem('token');
+    if (!token) window.location.href = '/login';
+
+    const headers = {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+    };
+
+    // --- API İstekleri (DTO'lara Uygun) ---
+
+    // 1. Ürün Kaydet (ProductCreateRequestDto)
+    document.getElementById('productForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const data = {
+            name: document.getElementById('pName').value,
+            description: document.getElementById('pDesc').value,
+            price: parseFloat(document.getElementById('pPrice').value),
+            categoryId: parseInt(document.getElementById('pCatId').value),
+            stockQuantity: parseInt(document.getElementById('pStockQty').value),
+            minStockQuantity: parseInt(document.getElementById('pMinStock').value)
+        };
+
+        try {
+            const res = await fetch('/api/products', { method:'POST', headers, body:JSON.stringify(data) });
+            if(res.ok) {
+                alert("Ürün ve başlangıç stoğu başarıyla oluşturuldu!");
+                e.target.reset();
+            } else {
+                alert("Hata: Ürün oluşturulamadı.");
+            }
+        } catch (err) { alert("Sunucu hatası!"); }
+    });
+
+    // 2. Kategori Kaydet (CategoryCreateRequestDto)
+    document.getElementById('categoryForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const data = { name: document.getElementById('cName').value };
+        const res = await fetch('/api/categories', { method:'POST', headers, body:JSON.stringify(data) });
+        if(res.ok) {
+            alert("Kategori başarıyla eklendi!");
+            e.target.reset();
+        }
+    });
+
+    // 3. Stok Sorgula
+    async function checkStock() {
+        const id = document.getElementById('sProdId').value;
+        if(!id) return alert("Lütfen Ürün ID girin.");
+        try {
+            const res = await fetch(`/api/stocks/product/${id}`, { headers });
+            const data = await res.json();
+            if(res.ok) {
+                document.getElementById('stockResult').style.display = 'block';
+                document.getElementById('currentStock').innerText = data.quantity;
+            } else {
+                alert("Stok kaydı bulunamadı.");
+            }
+        } catch (err) { alert("Ürün bulunamadı."); }
+    }
+
+    // 4. Stok Güncelle (Increase/Decrease)
+    async function updateStock(type) {
+        const id = document.getElementById('sProdId').value;
+        const qty = document.getElementById('updateQty').value;
+        if(!qty || qty <= 0) return alert("Geçerli bir miktar girin.");
+
+        const res = await fetch(`/api/stocks/product/${id}/${type}?quantity=${qty}`, {
+            method: 'PUT', headers
+        });
+        if(res.ok) {
+            alert("Stok başarıyla güncellendi!");
+            checkStock();
+        }
+    }
+
+    // 5. Bildirim Gönder (NotificationCreateRequestDto)
+    document.getElementById('notifyForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const userIdRaw = document.getElementById('nUserId').value;
+        const data = {
+            userId: userIdRaw ? parseInt(userIdRaw) : null,
+            title: document.getElementById('nTitle').value,
+            message: document.getElementById('nMessage').value
+        };
+
+        const res = await fetch('/api/admin/notifications', { method:'POST', headers, body:JSON.stringify(data) });
+        if(res.ok) {
+            alert("Bildirim gönderildi!");
+            e.target.reset();
+        }
+    });
+
+    function logout() {
+        localStorage.removeItem('token');
+        localStorage.removeItem('username');
+        window.location.href = '/';
+    }
+</script>
+
+</body>
+</html>

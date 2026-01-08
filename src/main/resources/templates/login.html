@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TechLogist - Giriş Yap</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/styles.css">
+    <style>
+        body.auth-body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            font-family: 'Poppins', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .auth-container {
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+            transition: transform 0.3s ease;
+        }
+        .auth-container:hover { transform: translateY(-5px); }
+        .auth-container h2 {
+            color: #2d3436;
+            margin-bottom: 30px;
+            font-weight: 600;
+        }
+        .input-group {
+            position: relative;
+            margin-bottom: 20px;
+        }
+        .input-group i {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #b2bec3;
+        }
+        .input-group input {
+            width: 100%;
+            padding: 12px 15px 12px 45px;
+            border: 2px solid #f1f2f6;
+            border-radius: 10px;
+            outline: none;
+            transition: 0.3s;
+            box-sizing: border-box;
+        }
+        .input-group input:focus { border-color: #3498db; }
+        .btn {
+            width: 100%;
+            padding: 12px;
+            background: #3498db;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        .btn:hover { background: #2980b9; box-shadow: 0 5px 15px rgba(52,152,219,0.3); }
+        .auth-footer { margin-top: 20px; font-size: 14px; color: #636e72; }
+        .auth-footer a { color: #3498db; text-decoration: none; font-weight: 500; }
+    </style>
+</head>
+<body class="auth-body">
+<div class="auth-container">
+    <div style="font-size: 40px; color: #3498db; margin-bottom: 10px;"><i class="fas fa-laptop-code"></i></div>
+    <h2>Giriş Yap</h2>
+    <form id="loginForm">
+        <div class="input-group">
+            <i class="fas fa-user"></i>
+            <input type="text" id="username" placeholder="Kullanıcı Adı" required>
+        </div>
+        <div class="input-group">
+            <i class="fas fa-lock"></i>
+            <input type="password" id="password" placeholder="Şifre" required>
+        </div>
+        <button type="submit" class="btn">Giriş Yap</button>
+    </form>
+    <div class="auth-footer">
+        Hesabınız yok mu? <a href="/register">Kayıt Ol</a>
+    </div>
+</div>
+
+<script>
+    document.getElementById('loginForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const usernameInput = document.getElementById('username').value;
+        const dto = {
+            username: usernameInput,
+            password: document.getElementById('password').value
+        };
+
+        try {
+            const response = await fetch('/api/auth/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(dto)
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                localStorage.setItem('token', data.token);
+                localStorage.setItem('username', usernameInput);
+                localStorage.setItem('userId', data.userId);
+
+                const tokenPayload = JSON.parse(atob(data.token.split('.')[1]));
+                const userRole = tokenPayload.role;
+
+                if (userRole === 'ADMIN') {
+                    window.location.href = '/admin';
+                } else {
+                    window.location.href = '/';
+                }
+            } else {
+                alert('Giriş başarısız! Bilgilerinizi kontrol edin.');
+            }
+        } catch (error) {
+            console.error("Giriş hatası:", error);
+        }
+    });
+</script>
+</body>
+</html>

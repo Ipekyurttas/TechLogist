@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TechLogist - Elektronik Dünyası</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <link rel="stylesheet" href="/css/styles.css">
+    <style>
+        /* Bildirim Kartı Özel Stilleri */
+        .notification-card {
+            width: 100%;
+            max-width: 700px;
+            background: white;
+            margin-bottom: 15px;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            border-left: 5px solid #bdc3c7;
+            text-align: left;
+            transition: 0.3s;
+        }
+        .notification-card.unread {
+            border-left-color: #3498db;
+            background: #f7fbff;
+        }
+        .notification-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+        .notification-date {
+            font-size: 0.8rem;
+            color: #7f8c8d;
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <nav>
+        <div class="logo">
+            <h1 onclick="window.location.reload()" style="cursor: pointer;">TechLogist</h1>
+        </div>
+        <ul class="nav-links">
+            <li><a href="#" id="nav-products">Ürünler</a></li>
+            <li><a href="#" id="nav-categories">Kategoriler</a></li>
+
+            <li>
+                <a href="/cart" class="cart-icon">
+                    <i class="fas fa-shopping-cart"></i>
+                    <span id="cart-count">0</span>
+                </a>
+            </li>
+
+            <div id="auth-links" class="nav-auth-group">
+                <li><a href="/login">Giriş Yap</a></li>
+                <li><a href="/register">Kayıt Ol</a></li>
+            </div>
+
+            <div id="user-menu" class="nav-auth-group" style="display: none;">
+                <li><a href="#" id="nav-orders">Siparişlerim</a></li>
+                <li class="user-profile-item" id="nav-profile" style="cursor: pointer;">
+                    <i class="fas fa-user-circle"></i>
+                    <span id="username-display">Kullanıcı</span>
+                </li>
+                <li><a href="#" id="logout-btn" class="logout-link">Çıkış Yap</a></li>
+            </div>
+        </ul>
+    </nav>
+</header>
+
+<main id="main-content">
+    <section class="hero">
+        <div class="hero-text">
+            <h2>Elektronik Ürünlerde En İyi Fiyatlar!</h2>
+            <p>Telefonlar, Laptoplar, Aksesuarlar... Tüm elektronik ihtiyaçlarınız için buradayız.</p>
+            <button class="hero-btn" onclick="document.getElementById('nav-products').click()">Hemen Keşfet</button>
+        </div>
+    </section>
+
+    <section class="categories">
+        <h2>Öne Çıkan Kategoriler</h2>
+        <div class="category-list">
+            <div class="category-card" onclick="document.getElementById('nav-categories').click()">
+                <div class="icon-box"><i class="fas fa-mobile-alt"></i></div>
+                <h3>Telefonlar</h3>
+            </div>
+            <div class="category-card" onclick="document.getElementById('nav-categories').click()">
+                <div class="icon-box"><i class="fas fa-laptop"></i></div>
+                <h3>Laptoplar</h3>
+            </div>
+            <div class="category-card" onclick="document.getElementById('nav-categories').click()">
+                <div class="icon-box"><i class="fas fa-headphones"></i></div>
+                <h3>Aksesuarlar</h3>
+            </div>
+        </div>
+    </section>
+</main>
+
+<footer>
+    <div class="footer-content">
+        <p>&copy; 2026 TechLogist. Tüm Hakları Saklıdır.</p>
+        <div class="social-links">
+            <a href="#"><i class="fab fa-facebook-f"></i></a>
+            <a href="#"><i class="fab fa-twitter"></i></a>
+            <a href="#"><i class="fab fa-instagram"></i></a>
+        </div>
+    </div>
+</footer>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const token = localStorage.getItem('token');
+        const mainContent = document.getElementById('main-content');
+
+        updateCartCount();
+
+        if (token) {
+            document.getElementById('auth-links').style.display = 'none';
+            document.getElementById('user-menu').style.display = 'flex';
+            document.getElementById('username-display').textContent = localStorage.getItem('username') || 'Profilim';
+        }
+
+        // --- 1. Ürünleri Listeleme ---
+        async function loadProducts(e) {
+            if (e) e.preventDefault();
+            try {
+                const response = await fetch('/api/products');
+                const products = await response.json();
+
+                let html = `<section class="view-section"><h2 class="section-title">Tüm Ürünler</h2><div class="product-grid">`;
+                products.forEach(p => {
+                    html += `
+                    <div class="product-card">
+                        <div class="icon-box"><i class="fas fa-box"></i></div>
+                        <div class="product-info">
+                            <h3>${p.name}</h3>
+                            <p class="price">${p.price} ₺</p>
+                            <button class="admin-btn" onclick="addToCart(${p.id}, '${p.name}', ${p.price})">Sepete Ekle</button>
+                        </div>
+                    </div>`;
+                });
+                html += `</div></section>`;
+                mainContent.innerHTML = html;
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            } catch (err) { console.error("Ürünler yüklenemedi:", err); }
+        }
+
+        // --- 2. Kategorileri Listeleme ---
+        async function loadCategories(e) {
+            if (e) e.preventDefault();
+            try {
+                const response = await fetch('/api/categories');
+                const categories = await response.json();
+
+                let html = `<section class="view-section"><h2 class="section-title">Kategoriler</h2><div class="category-list">`;
+                categories.forEach(c => {
+                    html += `
+                    <div class="category-card" style="cursor:default">
+                        <div class="icon-box"><i class="fas fa-tags"></i></div>
+                        <h3>${c.name}</h3>
+                        <p style="margin-bottom:10px; color:#666">Kategori ID: ${c.id}</p>
+                    </div>`;
+                });
+                html += `</div></section>`;
+                mainContent.innerHTML = html;
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            } catch (err) { console.error("Kategoriler yüklenemedi:", err); }
+        }
+
+        // --- 3. Siparişleri Listeleme ---
+        async function loadOrders(e) {
+            if (e) e.preventDefault();
+            const userId = localStorage.getItem('userId');
+            const userToken = localStorage.getItem('token');
+
+            if (!userId) {
+                alert("Siparişlerinizi görüntülemek için lütfen giriş yapın.");
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/orders/user/${userId}`, {
+                    headers: { 'Authorization': `Bearer ${userToken}` }
+                });
+                const orders = await response.json();
+
+                let html = `<section class="view-section"><h2 class="section-title">Siparişlerim</h2><div class="product-grid" style="flex-direction:column; align-items:center;">`;
+
+                if (!orders || orders.length === 0) {
+                    html += `<p>Henüz bir siparişiniz bulunmamaktadır.</p>`;
+                } else {
+                    orders.forEach(order => {
+                        const statusColor = order.status === 'CANCELLED' ? '#e74c3c' : '#27ae60';
+                        html += `
+                        <div class="cart-item" style="width:100%; max-width:700px; text-align:left; background:white; margin-bottom:15px; padding:20px; border-radius:12px; box-shadow:0 4px 6px rgba(0,0,0,0.05);">
+                            <div style="display:flex; justify-content:space-between; align-items:center;">
+                                <span><strong>Sipariş ID: #${order.orderId}</strong></span> <span style="color:${statusColor}; font-weight:bold;">${order.status}</span>
+                            </div>
+                            <p style="margin:10px 0; font-size:0.9rem; color:#666;">
+                                Tarih: ${new Date(order.orderDate).toLocaleString('tr-TR')}
+                            </p>
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-top:10px;">
+                                <span>Ürün Sayısı: ${order.items ? order.items.length : 0}</span>
+                                ${order.status !== 'CANCELLED' ?
+                            `<button class="btn-small" style="background:#e74c3c; color:white; border:none; padding:8px 15px; border-radius:5px; cursor:pointer;"
+                                      onclick="cancelOrder(${order.orderId})">İptal Et</button>` : ''}
+                            </div>
+                        </div>`;
+                    });
+                }
+                html += `</div></section>`;
+                mainContent.innerHTML = html;
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            } catch (err) { console.error("Siparişler yüklenemedi:", err); }
+        }
+
+        // --- 4. Bildirimleri Listeleme (YENİ) ---
+        async function loadNotifications(e) {
+            if (e) e.preventDefault();
+            const userToken = localStorage.getItem('token');
+
+            try {
+                // UserNotificationController @GetMapping metoduna istek
+                const response = await fetch('/api/notifications', {
+                    headers: { 'Authorization': `Bearer ${userToken}` }
+                });
+                const notifications = await response.json(); // NotificationResponseDto listesi
+
+                let html = `<section class="view-section"><h2 class="section-title">Bildirimlerim</h2><div class="product-grid" style="flex-direction:column; align-items:center;">`;
+
+                if (!notifications || notifications.length === 0) {
+                    html += `<p>Yeni bildiriminiz bulunmuyor.</p>`;
+                } else {
+                    notifications.forEach(n => {
+                        // Okunmamış bildirimler için mavi vurgu
+                        const unreadClass = n.read ? '' : 'unread';
+                        html += `
+                        <div class="notification-card ${unreadClass}">
+                            <div class="notification-header">
+                                <strong style="color:#2c3e50;">${n.title}</strong>
+                                <span class="notification-date">${new Date(n.createdAt).toLocaleString('tr-TR')}</span>
+                            </div>
+                            <p style="margin: 0; font-size: 0.95rem; color: #555;">${n.message}</p>
+                            ${!n.read ?
+                            `<button class="btn-small" style="margin-top:10px; background:#3498db; color:white; border:none; padding:5px 12px; border-radius:4px; cursor:pointer;"
+                                         onclick="markAsRead(${n.id})">Okundu İşaretle</button>` :
+                            `<span style="display:block; margin-top:10px; color:#27ae60; font-size:0.8rem;"><i class="fas fa-check"></i> Okundu</span>`
+                        }
+                        </div>`;
+                    });
+                }
+                html += `</div></section>`;
+                mainContent.innerHTML = html;
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            } catch (err) { console.error("Bildirimler yüklenemedi:", err); }
+        }
+
+        // --- Event Listener'lar ---
+        document.getElementById('nav-products').addEventListener('click', loadProducts);
+        document.getElementById('nav-categories').addEventListener('click', loadCategories);
+        document.getElementById('nav-orders').addEventListener('click', loadOrders);
+        document.getElementById('nav-profile').addEventListener('click', loadNotifications); // Profile tıklandığında tetiklenir
+
+        document.getElementById('logout-btn').addEventListener('click', (e) => {
+            e.preventDefault();
+            localStorage.clear();
+            window.location.href = '/';
+        });
+    });
+
+    // --- Bildirimi Okundu İşaretleme (YENİ) ---
+    async function markAsRead(id) {
+        const userToken = localStorage.getItem('token');
+        try {
+            // UserNotificationController @PutMapping("/{id}/read")
+            const res = await fetch(`/api/notifications/${id}/read`, {
+                method: 'PUT',
+                headers: { 'Authorization': `Bearer ${userToken}` }
+            });
+            if (res.ok) {
+                // Listeyi yenilemek için profile tekrar tıkla
+                document.getElementById('nav-profile').click();
+            }
+        } catch (err) { console.error("Hata:", err); }
+    }
+
+    function updateCartCount() {
+        const cart = JSON.parse(localStorage.getItem('cart')) || [];
+        document.getElementById('cart-count').textContent = cart.length;
+    }
+
+    function addToCart(productId, productName, productPrice) {
+        let cart = JSON.parse(localStorage.getItem('cart')) || [];
+        cart.push({ id: productId, name: productName, price: productPrice });
+        localStorage.setItem('cart', JSON.stringify(cart));
+        updateCartCount();
+        alert(productName + " sepete eklendi!");
+    }
+
+    async function cancelOrder(orderId) {
+        if (!confirm("Siparişi iptal etmek istediğinize emin misiniz?")) return;
+        const userToken = localStorage.getItem('token');
+        try {
+            const res = await fetch(`/api/orders/${orderId}/cancel`, {
+                method: 'PUT',
+                headers: { 'Authorization': `Bearer ${userToken}` }
+            });
+            if (res.ok) {
+                alert("Sipariş iptal edildi.");
+                document.getElementById('nav-orders').click();
+            }
+        } catch (err) { console.error(err); }
+    }
+</script>
+
+</body>
+</html>
