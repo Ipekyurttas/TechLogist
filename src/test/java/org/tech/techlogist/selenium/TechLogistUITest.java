@@ -19,11 +19,11 @@ public class TechLogistUITest {
     private WebDriver driver;
     private WebDriverWait wait;
 
-    private final String BASE_URL = "http://techlogist-app:8080";
+    private final String BASE_URL = "http://localhost:8085";
 
     @BeforeAll
     static void waitForApp() throws Exception {
-        String health = "http://techlogis-app:8080/login";
+        String health = "http://localhost:8085/login";
         int attempts = 30;
 
         System.out.println("⌛ Uygulama ayaga kalkiyor...");
@@ -36,7 +36,7 @@ public class TechLogistUITest {
                     System.out.println("🚀 App hazir!");
                     return;
                 }
-            } catch (Exception ignored) {}
+            } catch (Exception ignored) { }
             Thread.sleep(2000);
         }
         fail("❌ App zamanında ayağa kalkmadı!");
@@ -45,8 +45,10 @@ public class TechLogistUITest {
     @BeforeEach
     void setUp() {
         ChromeOptions options = new ChromeOptions();
-        options.addArguments("--headless=new", "--no-sandbox", "--disable-gpu",
-                "--disable-dev-shm-usage", "--window-size=1920,1080");
+        options.addArguments("--no-sandbox");
+        options.addArguments("--disable-dev-shm-usage");
+        options.addArguments("--window-size=1920,1080");
+        options.addArguments("--headless=new");
 
         driver = new ChromeDriver(options);
         wait = new WebDriverWait(driver, Duration.ofSeconds(15));
