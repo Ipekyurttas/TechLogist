@@ -26,6 +26,11 @@ services:
       - SPRING_JPA_HIBERNATE_DDL_AUTO=create-drop
     ports:
       - "8085:8080"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/login"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
     networks:
       - testnet
 

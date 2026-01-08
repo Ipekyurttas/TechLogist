@@ -50,7 +50,7 @@ public class TechLogistUITest {
 
     @BeforeEach
     void setUp() {
-        WebDriverManager.chromedriver().setup(); // browserInDocker() KALKTI
+        WebDriverManager.chromedriver().setup();
 
         ChromeOptions options = new ChromeOptions();
         options.addArguments("--headless=new", "--no-sandbox", "--disable-dev-shm-usage",
