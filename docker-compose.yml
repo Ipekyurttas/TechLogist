@@ -14,7 +14,7 @@ services:
 
   app:
     build: .
-    container_name: techlogist_app
+    container_name: techlogist-app
     environment:
       - SPRING_DATASOURCE_URL=jdbc:h2:mem:techlogist;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
       - SPRING_DATASOURCE_USERNAME=sa

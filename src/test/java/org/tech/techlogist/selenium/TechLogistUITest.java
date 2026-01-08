@@ -19,11 +19,11 @@ public class TechLogistUITest {
     private WebDriver driver;
     private WebDriverWait wait;
 
-    private final String BASE_URL = "http://techlogist_app:8080";
+    private final String BASE_URL = "http://techlogist-app:8080";
 
     @BeforeAll
     static void waitForApp() throws Exception {
-        String health = "http://techlogist_app:8080/login";
+        String health = "http://techlogis-app:8080/login";
         int attempts = 30;
 
         System.out.println("⌛ Uygulama ayaga kalkiyor...");
