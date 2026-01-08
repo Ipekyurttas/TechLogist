@@ -19,84 +19,65 @@ public class TechLogistUITest {
     private WebDriver driver;
     private WebDriverWait wait;
 
-    // Docker ağı içindeki servis adları kullanılmalıdır
     private final String BASE_URL = "http://techlogist_app:8080";
-    private final String SELENIUM_GRID_URL = "http://selenium-chrome:4444/wd/hub";
+    private final String GRID_URL = "http://selenium-chrome:4444/wd/hub";
 
     @BeforeAll
     static void waitForApp() throws Exception {
-        String healthUrl = "http://techlogist_app:8080/login";
-        System.out.println("⌛ Uygulamanın ayağa kalkması bekleniyor...");
+        String health = "http://techlogist_app:8080/login";
+        int attempts = 30;
 
-        int retries = 30;
-        while (retries-- > 0) {
+        System.out.println("⌛ Bekleniyor: Uygulama ayaga kalksin...");
+
+        while (attempts-- > 0) {
             try {
-                HttpURLConnection conn = (HttpURLConnection) new URL(healthUrl).openConnection();
+                HttpURLConnection conn = (HttpURLConnection) new URL(health).openConnection();
                 conn.setConnectTimeout(2000);
-                conn.setReadTimeout(2000);
-                conn.setRequestMethod("GET");
-
                 if (conn.getResponseCode() < 500) {
-                    System.out.println("🚀 Uygulama hazır!");
+                    System.out.println("🚀 Uygulama hazir!");
                     return;
                 }
             } catch (Exception ignored) {}
             Thread.sleep(2000);
         }
-        fail("❌ Uygulama zamanında ayağa kalkmadı.");
+        fail("❌ Uygulama zamanında ayağa kalkmadı!");
     }
 
     @BeforeEach
     void setUp() throws Exception {
-        // M4 (ARM64) mimarisi için en stabil ayarlar
         ChromeOptions options = new ChromeOptions();
-        options.addArguments("--headless=new");
-        options.addArguments("--no-sandbox");
-        options.addArguments("--disable-dev-shm-usage");
-        options.addArguments("--disable-gpu");
-        options.addArguments("--window-size=1920,1080");
+        options.addArguments("--headless=new", "--disable-gpu", "--no-sandbox",
+                "--disable-dev-shm-usage", "--window-size=1920,1080");
 
-        // Jenkins içindeki sorunlu ChromeDriver yerine RemoteWebDriver kullanıyoruz
-        try {
-            driver = new RemoteWebDriver(new URL(SELENIUM_GRID_URL), options);
-            System.out.println("✅ Selenium Grid'e başarıyla bağlanıldı.");
-        } catch (Exception e) {
-            System.err.println("❌ Selenium Grid bağlantı hatası: " + e.getMessage());
-            throw e;
-        }
-
+        driver = new RemoteWebDriver(new URL(GRID_URL), options);
         wait = new WebDriverWait(driver, Duration.ofSeconds(15));
-        registerInitialUsers();
+
+        registerUsers();
     }
 
     @AfterEach
     void tearDown() {
-        if (driver != null) {
-            driver.quit();
-        }
+        if (driver != null) driver.quit();
     }
 
-    // --- TEST METODLARI (Aynen Kalabilir) ---
-
-    private void registerInitialUsers() {
-        registerSingleUser("ipek", "ipek@techlogist.com", "123", "ADMIN");
-        registerSingleUser("mert", "mert@techlogist.com", "123", "CUSTOMER");
+    private void registerUsers() {
+        register("ipek", "ipek@techlogist.com", "123", "ADMIN");
+        register("mert", "mert@techlogist.com", "123", "CUSTOMER");
     }
 
-    private void registerSingleUser(String username, String email, String password, String role) {
+    private void register(String u, String e, String p, String r) {
         driver.get(BASE_URL + "/register");
         try {
-            wait.until(ExpectedConditions.presenceOfElementLocated(By.id("username")));
-            driver.findElement(By.id("username")).sendKeys(username);
-            driver.findElement(By.id("email")).sendKeys(email);
-            driver.findElement(By.id("password")).sendKeys(password);
-            driver.findElement(By.id("role")).sendKeys(role);
+            wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("username")));
+            driver.findElement(By.id("username")).sendKeys(u);
+            driver.findElement(By.id("email")).sendKeys(e);
+            driver.findElement(By.id("password")).sendKeys(p);
+            driver.findElement(By.id("role")).sendKeys(r);
             driver.findElement(By.cssSelector("button.btn")).click();
-
             Alert alert = wait.until(ExpectedConditions.alertIsPresent());
             alert.accept();
-        } catch (Exception e) {
-            System.out.println("⚠ Kullanıcı kaydı sırasında bir durum oluştu (Zaten kayıtlı olabilir): " + username);
+        } catch (Exception ignored) {
+            System.out.println("⚠ Kullanıcı zaten kayıtlı olabilir: " + u);
         }
     }
 
