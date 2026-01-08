@@ -49,12 +49,29 @@ pipeline {
 
     post {
         always {
-            echo 'Containerlar kapatılıyor'
-            sh 'docker compose down'
+            echo 'Post aşaması: container temizliği'
+            script {
+                if (fileExists('docker-compose.yml')) {
+                    sh 'docker compose down'
+                } else {
+                    echo 'Workspace yok, docker compose down atlandı'
+                }
+            }
         }
+
         failure {
             echo 'Hata sonrası container logları'
-            sh 'docker compose logs --tail=100'
+            script {
+                if (fileExists('docker-compose.yml')) {
+                    sh 'docker compose logs --tail=100'
+                } else {
+                    echo 'Workspace yok, log alınamadı'
+                }
+            }
+        }
+
+        success {
+            echo 'Pipeline başarıyla tamamlandı ✅'
         }
     }
 }
