@@ -1,7 +1,7 @@
 services:
   jenkins:
-    image: jenkins/jenkins:lts
-    container_name: jenkins
+    image: jenkins-full
+    container_name: jenkins-blueocean
     user: root
     ports:
       - "8080:8080"
@@ -26,15 +26,6 @@ services:
       interval: 5s
       timeout: 3s
       retries: 20
-    networks:
-      - testnet
-
-  selenium-chrome:
-    image: selenium/standalone-chromium:latest
-    container_name: selenium-chrome
-    shm_size: 2gb
-    depends_on:
-      - app
     networks:
       - testnet
 

@@ -2,8 +2,8 @@ package org.tech.techlogist.selenium;
 
 import org.junit.jupiter.api.*;
 import org.openqa.selenium.*;
+import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
-import org.openqa.selenium.remote.RemoteWebDriver; // ÖNEMLİ: RemoteWebDriver eklendi
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
@@ -19,38 +19,36 @@ public class TechLogistUITest {
     private WebDriver driver;
     private WebDriverWait wait;
 
-    private final String GRID_URL = "http://selenium-chrome:4444";
     private final String BASE_URL = "http://techlogist_app:8080";
-
 
     @BeforeAll
     static void waitForApp() throws Exception {
         String health = "http://techlogist_app:8080/login";
         int attempts = 30;
 
-        System.out.println("⌛ Bekleniyor: Uygulama ayaga kalksin...");
+        System.out.println("⌛ Uygulama ayaga kalkiyor...");
 
         while (attempts-- > 0) {
             try {
                 HttpURLConnection conn = (HttpURLConnection) new URL(health).openConnection();
                 conn.setConnectTimeout(2000);
                 if (conn.getResponseCode() < 500) {
-                    System.out.println("🚀 Uygulama hazir!");
+                    System.out.println("🚀 App hazir!");
                     return;
                 }
             } catch (Exception ignored) {}
             Thread.sleep(2000);
         }
-        fail("❌ Uygulama zamanında ayağa kalkmadı!");
+        fail("❌ App zamanında ayağa kalkmadı!");
     }
 
     @BeforeEach
-    void setUp() throws Exception {
+    void setUp() {
         ChromeOptions options = new ChromeOptions();
-        options.addArguments("--headless=new", "--disable-gpu", "--no-sandbox",
+        options.addArguments("--headless=new", "--no-sandbox", "--disable-gpu",
                 "--disable-dev-shm-usage", "--window-size=1920,1080");
 
-        driver = new RemoteWebDriver(new URL(GRID_URL), options);
+        driver = new ChromeDriver(options);
         wait = new WebDriverWait(driver, Duration.ofSeconds(15));
 
         registerUsers();
@@ -78,28 +76,26 @@ public class TechLogistUITest {
             Alert alert = wait.until(ExpectedConditions.alertIsPresent());
             alert.accept();
         } catch (Exception ignored) {
-            System.out.println("⚠ Kullanıcı zaten kayıtlı olabilir: " + u);
+            System.out.println("⚠ Kullanıcı zaten var: " + u);
         }
     }
 
-    @Test
-    @Order(1)
+    @Test @Order(1)
     @DisplayName("Admin Giriş ve Yönlendirme Testi")
     void testAdminLoginRedirect() {
         loginAsAdmin();
-        assertTrue(driver.getCurrentUrl().contains("/admin"), "Admin paneline yönlendirme başarısız!");
-        WebElement header = wait.until(ExpectedConditions.visibilityOfElementLocated(By.tagName("h2")));
-        assertTrue(header.getText().contains("Yönetim"));
+        assertTrue(driver.getCurrentUrl().contains("/admin"));
+        assertTrue(wait.until(ExpectedConditions.visibilityOfElementLocated(By.tagName("h2")))
+                .getText().contains("Yönetim"));
     }
 
-    @Test
-    @Order(2)
+    @Test @Order(2)
     @DisplayName("Admin Ürün Ekleme Testi")
     void testAdminAddProduct() {
         loginAsAdmin();
         waitForElement(By.id("pName"));
         driver.findElement(By.id("pName")).sendKeys("Jenkins Test Ürünü");
-        driver.findElement(By.id("pDesc")).sendKeys("Pipeline üzerinden otomatik eklendi.");
+        driver.findElement(By.id("pDesc")).sendKeys("Pipeline otomatik");
         driver.findElement(By.id("pPrice")).sendKeys("25000");
         driver.findElement(By.id("pCatId")).sendKeys("1");
         driver.findElement(By.id("pStockQty")).sendKeys("100");
@@ -109,59 +105,45 @@ public class TechLogistUITest {
         alertTextControl("başarıyla oluşturuldu");
     }
 
-    @Test
-    @Order(3)
-    @DisplayName("Müşteri Sipariş Akışı Testi")
+    @Test @Order(3)
     void testCustomerPurchaseFlow() {
         loginUser("mert", "123");
         waitForElement(By.id("nav-products"));
         driver.findElement(By.id("nav-products")).click();
 
-        WebElement addToCartBtn = wait.until(ExpectedConditions.elementToBeClickable(By.cssSelector(".admin-btn")));
-        jsClick(addToCartBtn);
+        jsClick(wait.until(ExpectedConditions.elementToBeClickable(By.cssSelector(".admin-btn"))));
         handleSimpleAlert();
 
         driver.get(BASE_URL + "/cart");
-        WebElement checkoutBtn = wait.until(ExpectedConditions.presenceOfElementLocated(By.cssSelector("button[onclick='checkout()']")));
-        jsClick(checkoutBtn);
+        jsClick(wait.until(ExpectedConditions.elementToBeClickable(
+                By.cssSelector("button[onclick='checkout()']"))));
 
-        WebElement creditCardOpt = wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//span[text()='Kredi Kartı']")));
-        creditCardOpt.click();
+        wait.until(ExpectedConditions.elementToBeClickable(
+                By.xpath("//span[text()='Kredi Kartı']"))).click();
+
         alertTextControl("Ödeme başarılı");
     }
 
-    @Test
-    @Order(4)
-    @DisplayName("Bildirim Okundu İşaretleme Testi")
+    @Test @Order(4)
     void testUserNotificationAndMarkAsRead() {
         loginUser("mert", "123");
         driver.findElement(By.id("nav-profile")).click();
-
         try {
-            WebElement unreadBtn = wait.until(ExpectedConditions.elementToBeClickable(
-                    By.cssSelector(".notification-card.unread button.btn-small")
-            ));
-            jsClick(unreadBtn);
-            WebElement readStatus = wait.until(ExpectedConditions.visibilityOfElementLocated(
-                    By.xpath("//span[contains(text(), 'Okundu')]")
-            ));
-            assertTrue(readStatus.isDisplayed());
+            jsClick(wait.until(ExpectedConditions.elementToBeClickable(
+                    By.cssSelector(".notification-card.unread button.btn-small"))));
+            assertTrue(wait.until(ExpectedConditions.visibilityOfElementLocated(
+                    By.xpath("//span[contains(text(), 'Okundu')]"))).isDisplayed());
         } catch (TimeoutException e) {
-            System.out.println("Okunmamış bildirim bulunamadı.");
+            System.out.println("Okunmamış bildirim yok.");
         }
     }
 
-    @Test
-    @Order(5)
-    @DisplayName("Sipariş İptal Testi")
+    @Test @Order(5)
     void testCustomerOrderCancellation() {
         loginUser("mert", "123");
         driver.findElement(By.id("nav-orders")).click();
         try {
-            WebElement cancelBtn = wait.until(ExpectedConditions.elementToBeClickable(
-                    By.xpath("//button[contains(text(), 'İptal Et')]")
-            ));
-            cancelBtn.click();
+            driver.findElement(By.xpath("//button[contains(text(),'İptal Et')]")).click();
             handleSimpleAlert();
             alertTextControl("iptal edildi");
         } catch (TimeoutException e) {
@@ -169,9 +151,7 @@ public class TechLogistUITest {
         }
     }
 
-    @Test
-    @Order(6)
-    @DisplayName("Admin Kategori Oluşturma Testi")
+    @Test @Order(6)
     void testAdminCreateCategory() {
         loginAsAdmin();
         jsClick(driver.findElement(By.xpath("//div[contains(text(), 'Kategori Ekle')]")));
@@ -181,12 +161,10 @@ public class TechLogistUITest {
         alertTextControl("Kategori başarıyla eklendi");
     }
 
-    @Test
-    @Order(7)
-    @DisplayName("Stok Güncelleme Testi")
+    @Test @Order(7)
     void testAdminIncreaseStock() {
         loginAsAdmin();
-        jsClick(driver.findElement(By.xpath("//div[contains(text(), 'Stok Güncelle')]")));
+        jsClick(driver.findElement(By.xpath("//div[contains(text(),'Stok Güncelle')]")));
         waitForElement(By.id("sProdId"));
         driver.findElement(By.id("sProdId")).sendKeys("1");
         driver.findElement(By.xpath("//button[text()='Sorgula']")).click();
@@ -196,15 +174,13 @@ public class TechLogistUITest {
         alertTextControl("Stok başarıyla güncellendi");
     }
 
-    @Test
-    @Order(8)
-    @DisplayName("Bildirim Gönderme Testi")
+    @Test @Order(8)
     void testAdminSendNotification() {
         loginAsAdmin();
         jsClick(driver.findElement(By.xpath("//div[contains(., 'Bildirim Gönder')]")));
         waitForElement(By.id("nTitle"));
         driver.findElement(By.id("nTitle")).sendKeys("Pipeline Duyurusu");
-        driver.findElement(By.id("nMessage")).sendKeys("Selenium testleri başarıyla tamamlanıyor!");
+        driver.findElement(By.id("nMessage")).sendKeys("Bu test Jenkins’de çalıştı!");
         jsClick(driver.findElement(By.cssSelector("#notifyForm button.admin-btn")));
         alertTextControl("Bildirim gönderildi");
     }
@@ -222,15 +198,8 @@ public class TechLogistUITest {
         driver.findElement(By.cssSelector("button.btn")).click();
         try {
             Alert alert = driver.switchTo().alert();
-            String text = alert.getText();
-            alert.accept();
-            fail("Login başarısız: " + text);
+            fail("Login başarısız: " + alert.getText());
         } catch (NoAlertPresentException ignored) {}
-
-        wait.until(ExpectedConditions.or(
-                ExpectedConditions.urlToBe(BASE_URL + "/"),
-                ExpectedConditions.urlContains("/admin")
-        ));
     }
 
     private void waitForElement(By locator) {
@@ -246,11 +215,10 @@ public class TechLogistUITest {
         driver.switchTo().alert().accept();
     }
 
-    private void alertTextControl(String expectedText) {
+    private void alertTextControl(String expected) {
         wait.until(ExpectedConditions.alertIsPresent());
-        Alert alert = driver.switchTo().alert();
-        String text = alert.getText();
-        assertTrue(text.contains(expectedText), "Beklenen alert metni bulunamadı: " + expectedText);
-        alert.accept();
+        String text = driver.switchTo().alert().getText();
+        assertTrue(text.contains(expected));
+        driver.switchTo().alert().accept();
     }
 }
