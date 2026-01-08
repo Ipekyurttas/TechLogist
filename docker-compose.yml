@@ -1,5 +1,3 @@
-version: "3.9"
-
 services:
   jenkins:
     image: jenkins/jenkins:lts
@@ -19,7 +17,6 @@ services:
     container_name: techlogist_app
     environment:
       - SPRING_DATASOURCE_URL=jdbc:h2:mem:techlogist;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
-      - SPRING_DATASOURCE_DRIVER_CLASS_NAME=org.h2.Driver
       - SPRING_DATASOURCE_USERNAME=sa
       - SPRING_DATASOURCE_PASSWORD=
       - SPRING_JPA_DATABASE_PLATFORM=org.hibernate.dialect.H2Dialect
@@ -27,10 +24,10 @@ services:
     ports:
       - "8085:8080"
     healthcheck:
-      test: ["CMD", "curl", "-Lf", "http://localhost:8080/"]
+      test: ["CMD", "wget", "-q", "-O", "-", "http://localhost:8080/"]
       interval: 5s
       timeout: 3s
-      retries: 20
+      retries: 25
     networks:
       - testnet
 
