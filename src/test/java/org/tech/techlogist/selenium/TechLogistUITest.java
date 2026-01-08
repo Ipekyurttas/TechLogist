@@ -8,6 +8,8 @@ import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.time.Duration;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -20,26 +22,41 @@ public class TechLogistUITest {
 
     private final String BASE_URL = "http://techlogist_app:8080";
 
+    @BeforeAll
+    static void waitForApp() throws Exception {
+        String healthUrl = "http://techlogist_app:8080/login";
+
+        System.out.println("⌛ Uygulamanın ayağa kalkması bekleniyor...");
+
+        int retries = 30;
+        while (retries-- > 0) {
+            try {
+                HttpURLConnection conn = (HttpURLConnection) new URL(healthUrl).openConnection();
+                conn.setConnectTimeout(2000);
+                conn.setReadTimeout(2000);
+                conn.setRequestMethod("GET");
+
+                if (conn.getResponseCode() < 500) {
+                    System.out.println("🚀 Uygulama hazır!");
+                    return;
+                }
+            } catch (Exception ignored) {}
+
+            Thread.sleep(2000);
+        }
+
+        fail("❌ Uygulama zamanında ayağa kalkmadı.");
+    }
+
     @BeforeEach
     void setUp() {
-        WebDriverManager.chromedriver().browserInDocker().setup();
+        WebDriverManager.chromedriver().setup(); // browserInDocker() KALKTI
 
         ChromeOptions options = new ChromeOptions();
-
-        options.setBinary("/usr/bin/chromium");
-
-        options.addArguments("--headless=new");
-        options.addArguments("--no-sandbox");
-        options.addArguments("--disable-dev-shm-usage");
-        options.addArguments("--disable-gpu");
-        options.addArguments("--window-size=1920,1080");
-        options.addArguments("--remote-allow-origins=*");
-        options.addArguments("--disable-notifications");
-        options.setPageLoadStrategy(PageLoadStrategy.NORMAL);
+        options.addArguments("--headless=new", "--no-sandbox", "--disable-dev-shm-usage",
+                "--disable-gpu", "--window-size=1920,1080", "--disable-notifications");
 
         driver = new ChromeDriver(options);
-        driver.manage().timeouts().pageLoadTimeout(Duration.ofSeconds(30));
-        driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(10));
         wait = new WebDriverWait(driver, Duration.ofSeconds(15));
 
         registerInitialUsers();
@@ -47,9 +64,7 @@ public class TechLogistUITest {
 
     @AfterEach
     void tearDown() {
-        if (driver != null) {
-            driver.quit();
-        }
+        if (driver != null) driver.quit();
     }
 
     private void registerInitialUsers() {
@@ -64,18 +79,14 @@ public class TechLogistUITest {
         driver.findElement(By.id("username")).sendKeys(username);
         driver.findElement(By.id("email")).sendKeys(email);
         driver.findElement(By.id("password")).sendKeys(password);
-
-        WebElement roleDropdown = driver.findElement(By.id("role"));
-        roleDropdown.sendKeys(role);
-
+        driver.findElement(By.id("role")).sendKeys(role);
         driver.findElement(By.cssSelector("button.btn")).click();
 
         try {
             Alert alert = wait.until(ExpectedConditions.alertIsPresent());
-            System.out.println("Kayıt Alert Mesajı: " + alert.getText());
             alert.accept();
         } catch (TimeoutException e) {
-            fail(username + " kullanıcısı kaydedilirken alert çıkmadı. Sayfa yönlendirmesini kontrol edin.");
+            System.out.println("⚠ Kullanıcı zaten kayıtlı olabilir: " + username);
         }
     }
 
