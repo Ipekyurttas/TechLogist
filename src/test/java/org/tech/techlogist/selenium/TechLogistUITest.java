@@ -21,27 +21,6 @@ public class TechLogistUITest {
 
     private final String BASE_URL = "http://localhost:8085";
 
-    @BeforeAll
-    static void waitForApp() throws Exception {
-        String health = "http://localhost:8085/login";
-        int attempts = 30;
-
-        System.out.println("⌛ Uygulama ayaga kalkiyor...");
-
-        while (attempts-- > 0) {
-            try {
-                HttpURLConnection conn = (HttpURLConnection) new URL(health).openConnection();
-                conn.setConnectTimeout(2000);
-                if (conn.getResponseCode() < 500) {
-                    System.out.println("🚀 App hazir!");
-                    return;
-                }
-            } catch (Exception ignored) { }
-            Thread.sleep(2000);
-        }
-        fail("❌ App zamanında ayağa kalkmadı!");
-    }
-
     @BeforeEach
     void setUp() {
         ChromeOptions options = new ChromeOptions();
