@@ -1,77 +1,69 @@
 pipeline {
     agent any
 
+    triggers {
+        pollSCM('* * * * *')
+    }
+
+    environment {
+        PATH = "/usr/local/bin:${env.PATH}"
+    }
+
+    tools {
+        maven 'maven'
+    }
+
     stages {
-        stage('Sistemi Hazırla') {
+        stage('Checkout') {
             steps {
-                echo 'Docker ortamı hazırlanıyor'
-                sh '''
-                    set -x
-                    docker version
-                    docker-compose down || true
-                    docker-compose up -d --build
-                    docker-compose ps
-                    sleep 20
-                '''
+                git branch: 'main', url: 'https://github.com/Ipekyurttas/TechLogist.git'
+            }
+        }
+
+        stage('Build') {
+            steps {
+                sh 'mvn clean compile -DskipTests'
             }
         }
 
         stage('Unit Tests') {
             steps {
-                echo 'Unit testler çalıştırılıyor'
-                sh '''
-                    set -x
-                    mvn -e test -Dtest=org.tech.techlogist.unit.*
-                '''
+                sh 'mvn test -Dtest=org.tech.techlogist.unit.**.*Test'
             }
         }
 
         stage('Integration Tests') {
             steps {
-                echo 'Integration testler çalıştırılıyor'
+                sh 'mvn test -Dtest=org.tech.techlogist.integration.**.*IT'
+            }
+        }
+
+        stage('Start App with Docker') {
+            steps {
                 sh '''
-                    set -x
-                    mvn -e test -Dtest=org.tech.techlogist.integration.*
+                docker-compose down || true
+                docker-compose up -d --build app
+                echo "App container başlatıldı."
                 '''
             }
         }
 
         stage('Selenium UI Tests') {
             steps {
-                echo 'Selenium testleri çalıştırılıyor'
-                sh '''
-                    set -x
-                    mvn -e test -Dtest=org.tech.techlogist.selenium.*
-                '''
+                sh "mvn test -Dtest=org.tech.techlogist.selenium.**.*Test"
             }
         }
     }
 
     post {
         always {
-            echo 'Post aşaması: container temizliği'
-            script {
-                if (fileExists('docker-compose.yml')) {
-                    sh 'docker-compose down || true'
-                } else {
-                    echo 'Workspace yok, docker-compose down atlandı'
-                }
-            }
+            sh "docker-compose down || true"
         }
-
-        failure {
-            echo 'Hata sonrası container logları'
-            script {
-                if (fileExists('docker-compose.yml')) {
-                    sh 'docker-compose logs'
-                } else {
-                    echo 'Workspace yok, log alınamadı'
-                }
-            }
-        }
-
         success {
-            echo 'Pipeline başarıyla tamamlandı ✅'
+            echo "Tüm testler başarıyla tamamlandı!"
+        }
+        failure {
+            echo "Testlerde hata oluştu!"
         }
     }
 }

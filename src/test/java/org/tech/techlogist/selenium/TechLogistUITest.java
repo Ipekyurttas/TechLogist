@@ -25,7 +25,6 @@ public class TechLogistUITest {
 
     @BeforeAll
     static void initAll() throws Exception {
-        // 1. App Hazır mı Kontrolü
         String health = BASE_URL + "/login";
         int attempts = 30;
         while (attempts-- > 0) {
@@ -35,12 +34,8 @@ public class TechLogistUITest {
             } catch (Exception ignored) { }
             Thread.sleep(2000);
         }
-
-        // 2. Veritabanını SQL ile Sıfırla
         clearDatabase();
-        Thread.sleep(3000); // Tabloların yeniden oluşması için bekleme
-
-        // 3. Test Kullanıcılarını Kaydet (HTML ID'lerine Uygun: regUsername vb.)
+        Thread.sleep(3000);
         registerStaticUsers();
     }
 
@@ -89,8 +84,6 @@ public class TechLogistUITest {
     @AfterEach
     void tearDown() { if (driver != null) driver.quit(); }
 
-    // --- 8 KRİTİK TEST SENARYOSU ---
-
     @Test @Order(1)
     @DisplayName("Admin Giriş ve Yönlendirme Testi")
     void testAdminLoginRedirect() {
@@ -114,7 +107,6 @@ public class TechLogistUITest {
     @DisplayName("Admin Yeni Ürün ve Stok Ekleme")
     void testAdminAddProduct() {
         loginUser("esra", "123");
-        // Form ID'leri: pName, pDesc, pPrice, pCatId, pStockQty, pMinStock
         wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("pName"))).sendKeys("Laptop");
         driver.findElement(By.id("pDesc")).sendKeys("Gaming Laptop");
         driver.findElement(By.id("pPrice")).sendKeys("45000");
@@ -129,16 +121,12 @@ public class TechLogistUITest {
     @DisplayName("Müşteri Ürünü Sepete Ekleme ve Ödeme")
     void testCustomerPurchaseFlow() {
         loginUser("esma", "123");
-        // Ürünlere tıkla ve ilk ürünü ekle
         wait.until(ExpectedConditions.elementToBeClickable(By.id("nav-products"))).click();
         jsClick(wait.until(ExpectedConditions.elementToBeClickable(By.cssSelector(".admin-btn"))));
-        handleSimpleAlert(); // "sepete eklendi" uyarısı
+        handleSimpleAlert();
 
-        // Sepete git ve checkout yap
         driver.get(BASE_URL + "/cart");
         wait.until(ExpectedConditions.elementToBeClickable(By.cssSelector("button[onclick='checkout()']"))).click();
-
-        // Ödeme Modalı
         wait.until(ExpectedConditions.elementToBeClickable(By.xpath("//span[text()='Kredi Kartı']"))).click();
         alertTextControl("Ödeme başarılı");
     }
@@ -193,11 +181,9 @@ public class TechLogistUITest {
         alertTextControl("Bildirim gönderildi");
     }
 
-    // --- YARDIMCI METODLAR ---
 
     private void loginUser(String user, String pass) {
         driver.get(BASE_URL + "/login");
-        // Login sayfasında regUsername DEĞİL, username kullanılmış
         wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("username"))).sendKeys(user);
         driver.findElement(By.id("password")).sendKeys(pass);
         driver.findElement(By.cssSelector("button.btn")).click();
