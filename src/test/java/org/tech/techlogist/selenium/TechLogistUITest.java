@@ -58,8 +58,8 @@ public class TechLogistUITest {
 
         try {
             String[][] users = {
-                    {"esra", "esra@techlogist.com", "123"},
-                    {"esma", "esma@techlogist.com", "123"}
+                    {"ipek", "esra@techlogist.com", "123"},
+                    {"mert", "esma@techlogist.com", "123"}
             };
             for (String[] u : users) {
                 tempDriver.get(BASE_URL + "/register");
@@ -87,7 +87,7 @@ public class TechLogistUITest {
     @Test @Order(1)
     @DisplayName("Admin Giriş ve Yönlendirme Testi")
     void testAdminLoginRedirect() {
-        loginUser("esra", "123");
+        loginUser("ipek", "123");
         wait.until(ExpectedConditions.urlContains("/admin"));
         assertTrue(driver.getCurrentUrl().contains("/admin"));
         assertTrue(driver.findElement(By.tagName("h2")).getText().contains("Yönetim"));
@@ -96,7 +96,7 @@ public class TechLogistUITest {
     @Test @Order(2)
     @DisplayName("Admin Yeni Kategori Ekleme")
     void testAdminCreateCategory() {
-        loginUser("esra", "123");
+        loginUser("ipek", "123");
         jsClick(driver.findElement(By.xpath("//div[contains(text(), 'Kategori Ekle')]")));
         wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("cName"))).sendKeys("Elektronik");
         driver.findElement(By.cssSelector("#categoryForm button.admin-btn")).click();
@@ -106,7 +106,7 @@ public class TechLogistUITest {
     @Test @Order(3)
     @DisplayName("Admin Yeni Ürün ve Stok Ekleme")
     void testAdminAddProduct() {
-        loginUser("esra", "123");
+        loginUser("ipek", "123");
         wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("pName"))).sendKeys("Laptop");
         driver.findElement(By.id("pDesc")).sendKeys("Gaming Laptop");
         driver.findElement(By.id("pPrice")).sendKeys("45000");
@@ -120,7 +120,7 @@ public class TechLogistUITest {
     @Test @Order(4)
     @DisplayName("Müşteri Ürünü Sepete Ekleme ve Ödeme")
     void testCustomerPurchaseFlow() {
-        loginUser("esma", "123");
+        loginUser("mert", "123");
         wait.until(ExpectedConditions.elementToBeClickable(By.id("nav-products"))).click();
         jsClick(wait.until(ExpectedConditions.elementToBeClickable(By.cssSelector(".admin-btn"))));
         handleSimpleAlert();
@@ -134,7 +134,7 @@ public class TechLogistUITest {
     @Test @Order(5)
     @DisplayName("Bildirim Okundu İşaretleme")
     void testUserNotification() {
-        loginUser("esma", "123");
+        loginUser("mert", "123");
         jsClick(driver.findElement(By.id("nav-profile")));
         try {
             WebElement markRead = wait.until(ExpectedConditions.elementToBeClickable(By.cssSelector(".notification-card.unread button")));
@@ -146,7 +146,7 @@ public class TechLogistUITest {
     @Test @Order(6)
     @DisplayName("Sipariş İptal Etme")
     void testOrderCancellation() {
-        loginUser("esma", "123");
+        loginUser("mert", "123");
         jsClick(driver.findElement(By.id("nav-orders")));
         try {
             WebElement cancelBtn = wait.until(ExpectedConditions.elementToBeClickable(By.xpath("//button[text()='İptal Et']")));
@@ -159,7 +159,7 @@ public class TechLogistUITest {
     @Test @Order(7)
     @DisplayName("Admin Stok Güncelleme")
     void testAdminStockUpdate() {
-        loginUser("esra", "123");
+        loginUser("ipek", "123");
         jsClick(driver.findElement(By.xpath("//div[contains(text(),'Stok Güncelle')]")));
         wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("sProdId"))).sendKeys("1");
         driver.findElement(By.xpath("//button[text()='Sorgula']")).click();
@@ -173,7 +173,7 @@ public class TechLogistUITest {
     @Test @Order(8)
     @DisplayName("Admin Herkese Bildirim Gönderme")
     void testAdminGlobalNotification() {
-        loginUser("esra", "123");
+        loginUser("ipek", "123");
         jsClick(driver.findElement(By.xpath("//div[contains(text(), 'Bildirim Gönder')]")));
         wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("nTitle"))).sendKeys("Kampanya!");
         driver.findElement(By.id("nMessage")).sendKeys("Tüm ürünlerde %20 indirim!");
