@@ -100,7 +100,7 @@ public class TechLogistUITest {
         jsClick(driver.findElement(By.xpath("//div[contains(text(), 'Kategori Ekle')]")));
         wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("cName"))).sendKeys("Elektronik");
         driver.findElement(By.cssSelector("#categoryForm button.admin-btn")).click();
-        alertTextControl("başarıyla eklendi");
+        alertTextControl("başarıyla eklendi !!");
     }
 
     @Test @Order(3)
